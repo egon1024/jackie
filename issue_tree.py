@@ -3,6 +3,7 @@ A class to represent a tree of issues.
 """
 
 # Built in imports
+import operator
 
 # Our imports
 from variable_loader import VariableLoader
@@ -84,7 +85,7 @@ class IssueTree(object):
             if uplink not in self.issues:
                 self.missing.add(uplink)
 
-    def print_tree(self):
+    def print_tree(self, label_field="name"):
         self.refresh_links(validate=True)
 
         colors = {
@@ -94,18 +95,23 @@ class IssueTree(object):
         }
 
         issue = self.issues[self.top]
+        label = getattr(issue, label_field, issue.name)
         color = colors[issue.issuetype.lower()]
-        tree = Tree(f"[{color}]{issue.name}")
+        tree = Tree(f"[{color}]{label}")
 
-        for name in sorted(self.downlinks[self.top]):
-            issue = self.issues[name]
-            color = colors[issue.issuetype.lower()]
-            sub_tree = tree.add(f"[{color}]{issue.name}")
-
-            for st_name in sorted(self.downlinks[name]):
-                issue = self.issues[st_name]
+        if self.top in self.downlinks: 
+            for name in sorted(self.downlinks[self.top]):
+                issue = self.issues[name]
+                label = getattr(issue, label_field, issue.name)
                 color = colors[issue.issuetype.lower()]
-                sub_tree.add(f"[{color}]{issue.name}")
+                sub_tree = tree.add(f"[{color}]{label}")
+
+                if name in self.downlinks:
+                    for st_name in sorted(self.downlinks[name]):
+                        issue = self.issues[st_name]
+                        label = getattr(issue, label_field, issue.name)
+                        color = colors[issue.issuetype.lower()]
+                        sub_tree.add(f"[{color}]{label}")
 
         print(tree)
 
@@ -131,3 +137,36 @@ class IssueTree(object):
 
         for issue in self.issues.values():
             issue.render(variables)
+
+    def as_list(self):
+        """
+        Takes the tree and returns it as an ordered list
+        """
+
+        ret_val = [self.issues[self.top]]
+
+        if self.top in self.downlinks:
+            # Get the list of stories and iterate
+            stories = [
+                self.issues[_]
+                for _ in self.downlinks[self.top]
+                if _ in self.issues
+            ]
+            stories = sorted(stories, key=operator.attrgetter('order'))
+
+            for story in stories:
+                # Add the story first, and then iterate through its children
+                ret_val.append(story)
+
+                if story.name in self.downlinks:
+                    subtasks = [
+                        self.issues[_]
+                        for _ in self.downlinks[story.name]
+                        if _ in self.issues
+                    ]
+
+                    subtasks = sorted(subtasks, key=operator.attrgetter('order'))
+                    ret_val += subtasks
+
+        return ret_val
+

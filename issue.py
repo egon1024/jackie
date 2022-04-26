@@ -65,10 +65,11 @@ class Issue(object):
             self.render()
 
     def validate(self):
+        print(f"Validating '{self.name}'")
         # Any missing attributes
         missing_attrs = [
             _ for _ in self.REQUIRED
-            if _ not in self or getattr(self, _) is None
+            if not hasattr(self, _) or getattr(self, _) is None
         ]
         if missing_attrs:
             err_str = "Missing required attributes: {}".format(', '.join(missing_attrs))
@@ -124,7 +125,7 @@ class Issue(object):
             val = getattr(self, field)
             if val is not None:
                 template = jinja_env.from_string(str(val))
-                setattr(self, field, template.render(self.vars))
+                setattr(self, field, template.render(vars))
 
     def get_jinja_env(self):
         if self._jinja_env is None:
