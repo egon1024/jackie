@@ -25,12 +25,11 @@ class Issue(object):
     }
     REQUIRED = {'name', 'jira_project', 'issuetype', 'summary'}
 
-    META_ATTRS = {'vars', 'jira', 'parent_issue'}
+    META_ATTRS = {'vars', 'jira_id'}
 
     def __init__(self, **kwargs):
         self._vars = {}
-        self._jira = None
-        self._parent_issue = None
+        self._jira_id = None
 
         self._rendered = False
         self._jinja_env = None
@@ -105,17 +104,20 @@ class Issue(object):
             if not isinstance(value, dict):
                 raise FieldTypeException("vars must be a dictionary")
 
+            self._vars = vars
+
+        elif name in self.META_ATTRS:
+            attr_name = f"_{name}"
+            super(Issue, self).__setattr_(attr_name, value)
+
         else:
             return super(Issue, self).__setattr__(name, value)
-
-    def get_parent_issue(self):
-        return self._parent_issue
 
     def render(self, vars=None):
         self.validate()
 
         if vars is None:
-            vars = self.vars
+            vars = self._vars
 
         jinja_env = self.get_jinja_env()
 

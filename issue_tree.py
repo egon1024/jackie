@@ -22,14 +22,27 @@ class ArgumentException(IssueTreeException, ValueError): pass
 
 class IssueTree(object):
 
-    def __init__(self, jira=None, issues=None):
+    def __init__(self):
+        # A map of the issue names to the actual object
         self.issues = dict()
+
+        # A map of issue names to the name of their parent
         self.uplinks = dict()
+
+        # A map of issue names to the names of their children
         self.downlinks = dict()
-        self.missing = set()  # Issues referenced by name, but not in the tree yet
+
+        # A set of issue names that are referenced, but not defined
+        self.missing = set()
+
+        # The name of the issue at the top of the hierarchy
         self.top = None
 
+        # The file from which to pull variables for rendering issues
         self.var_file = None
+
+        # The file from which to load the yamale schema describing the
+        # variable requirements
         self.var_schema = None
 
     def add_issue(self, issue):

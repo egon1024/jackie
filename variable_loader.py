@@ -53,6 +53,8 @@ class VariableLoader(object):
 
     def get_data(self):
         self.updated = False
+
+        # Return a deepcopy of the data so that we keep it clean for other requestors
         return deepcopy(dict(self._data))
 
     def __setattr__(self, name, value):
